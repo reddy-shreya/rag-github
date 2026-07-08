@@ -2,6 +2,7 @@ from src.ingestion.repo_loader import clone_repo
 from src.ingestion.file_filter import get_relevant_files
 from src.chunking.code_chunker import chunk_code_file
 from src.chunking.doc_chunker import chunk_doc_file
+from src.embedding.vector_store import add_chunks,similarity_search
 
 def main():
     repo_url = input("Enter GitHub repo URL: ").strip()
@@ -54,7 +55,30 @@ def main():
         print(f"  Type: {sample['metadata']['chunk_type']}")
         print(f"  Content preview: {sample['content'][:100]}...")
 
+    # Day 3 — Embedding + Vector Store
+    print(f"\n--- Embedding + Storing ---")
+    add_chunks(code_chunks, "code_chunks")
+    add_chunks(doc_chunks, "doc_chunks")
 
+    # Test similarity search
+    print(f"\n--- Similarity Search Test ---")
+    query = "how does FastAPI handle request validation?"
+    print(f"Query: {query}\n")
+
+    print("Top 3 code results:")
+    code_results = similarity_search(query, "code_chunks", top_k=3)
+    for i, result in enumerate(code_results):
+        print(f"  {i+1}. {result['metadata']['file_path']}")
+        print(f"     Function: {result['metadata']['name']}")
+        print(f"     Score: {result['score']:.3f}")
+        print(f"     Preview: {result['content'][:80]}...")
+
+    print("\nTop 3 doc results:")
+    doc_results = similarity_search(query, "doc_chunks", top_k=3)
+    for i, result in enumerate(doc_results):
+        print(f"  {i+1}. {result['metadata']['file_path']}")
+        print(f"     Score: {result['score']:.3f}")
+        print(f"     Preview: {result['content'][:80]}...")
 
 if __name__ == "__main__":
     main()
